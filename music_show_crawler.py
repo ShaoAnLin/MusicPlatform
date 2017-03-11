@@ -31,25 +31,20 @@ def river_bank_crawler(show_list, url):
 	data = soup.select('.concerts')
 
 	idx = 0
-	for value in data[0].select('.show_name'):
-		show_list.append( Show(idx, value.text) )
-		idx += 1
+	for show_info in data[0].select('.show_info'):
+		show_name = show_info.select('.show_name')[0]
+		show_list.append( Show(idx, show_name.text) )
 
-	idx = 0
-	for value in data[0].select('.show_date'):
-		show_list[idx].set_date(value.select('.date')[0].text)
-		show_list[idx].set_year(value.select('.year')[0].text)
-		idx += 1
+		show_date = show_info.select('.show_date')[0]
+		show_list[idx].set_date(show_date.select('.date')[0].text)
+		show_list[idx].set_year(show_date.select('.year')[0].text)
 
-	idx = 0
-	for value in data[0].select('.price_wrapper'):
-		show_list[idx].set_price(value.select('.info')[0].text)
-		show_list[idx].set_drink(value.select('.info')[1].text)
-		idx += 1
+		price_wrapper = show_info.select('.price_wrapper')[0]
+		show_list[idx].set_price(price_wrapper.select('.info')[0].text)
+		show_list[idx].set_drink(price_wrapper.select('.info')[1].text)
 
-	idx = 0
-	for value in data[0].select('.show_photo'):
-		show_list[idx].set_image_url(riverside_homepage + value.find("img")['src'])
+		show_photo = show_info.select('.show_photo')[0]
+		show_list[idx].set_image_url(riverside_homepage + show_photo.find("img")['src'])
 		idx += 1
 
 	for show in show_list:
@@ -64,23 +59,21 @@ def witch_house_crawler(show_list, url):
 	data = soup.select('.event-group')
 
 	idx = 0
-	for value in data[0].select('.event-name'):
-		show_list.append( Show(idx, value.text) )
-		idx += 1
+	for show_info in data[0].select('.event-title-group'):
+		event_name = show_info.select('.event-name')[0]
+		show_list.append( Show(idx, event_name.text) )
 
-	idx = 0
-	for value in data[0].select('.event-title-group'):
-		event_date = '%s/%s(%s)' % (
-			value.select('.date')[0].text, 
-			value.select('.date')[2].text, 
-			value.select('.weekday')[0].text)
-		event_time = '%s-%s' % (value.select('.time')[0].text, value.select('.time')[1].text)
+		event_date_list = show_info.select('.date')
+		event_weekday = show_info.select('.weekday')[0]
+		event_date = '%s/%s(%s)' % (event_date_list[0].text, event_date_list[2].text, event_weekday.text)
 		show_list[idx].set_date(event_date)
+
+		event_time_list = show_info.select('.time')
+		event_time = '%s-%s' % (event_time_list[0].text, event_time_list[1].text)
 		show_list[idx].set_time(event_time)
 		idx += 1
 
-	idx = 0
-	for value in data[0].select('.event-img'):
+		event_img = show_info.select('.event-img')[0]
 		show_list[idx].set_image_url(value.find("img")['src'])
 		idx += 1
 
@@ -100,11 +93,11 @@ red_house_list = []
 river_bank_cafe_list = []
 witch_house_list = []
 
-ofile.write('===== red house =====\n')
-river_bank_crawler(red_house_list, red_house_url)
+#ofile.write('===== red house =====\n')
+#river_bank_crawler(red_house_list, red_house_url)
 
 ofile.write('===== river bank cafe =====\n')
 river_bank_crawler(river_bank_cafe_list, river_bank_cafe_url)
 
-ofile.write('===== witch house =====\n')
-witch_house_crawler(witch_house_list, witch_house_url)
+#ofile.write('===== witch house =====\n')
+#witch_house_crawler(witch_house_list, witch_house_url)
