@@ -2,7 +2,8 @@
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-import requests
+
+import requests, json, io
 from bs4 import BeautifulSoup
 
 class Show:
@@ -22,35 +23,57 @@ class Show:
     def set_image_url(self, imgUrl):
         self._imageUrl = imgUrl
 
+NAME = 'name'
+DATE = 'date'
+START_TIME = 'startTime'
+HREF = 'href'
+IMG_HREF = 'img_href'
+ARTISTS = 'artists'
+ARTIST_NAME = 'artist_name'
+ARTIST_HREF = 'artist_href'
+PRICES = 'prices'
+DRINK = 'drink'
+LOCATION = 'location'
+
 #======================= Functions =========================
+def write_json(filename, show_list):
+    with io.open(filename, 'w', encoding='utf8') as outfile:
+        str_ = json.dumps(show_list,
+                          indent=4, sort_keys=True,
+                          separators=(',', ':'), ensure_ascii=False)
+        outfile.write(str_)
+
+def strip_tags(soup, invalid_tag, invalid_attribute):
+    for tag in soup.findAll(True):
+        if tag.name == invalid_tag:
+            tag.replaceWith('')
+    return soup
+
 # TODO: show time can only be obtained by clicking "More Info."
 def river_bank_crawler(show_list, url):
     res = requests.get(url)
     res.encoding = 'utf8'
-    soup = BeautifulSoup(res.text, "html.parser")
+    soup = BeautifulSoup(res.text, 'html.parser')
     data = soup.select('.concerts')
 
-    idx = 0
     for show_info in data[0].select('.show_info'):
+        show_detail = {}
         show_name = show_info.select('.show_name')[0]
-        show_list.append( Show(idx, show_name.text) )
+        show_detail[NAME] = show_name.text
 
         show_date = show_info.select('.show_date')[0]
-        show_list[idx].set_date(show_date.select('.date')[0].text)
-        show_list[idx].set_year(show_date.select('.year')[0].text)
+        show_date_text = strip_tags(show_date.select('.date')[0], 'span', 'date_slash').text
+        show_year_date = show_date.select('.year')[0].text + show_date_text
+        show_detail[DATE] = show_year_date
+        # TODO: convert to YYYY-MM-DD
 
         price_wrapper = show_info.select('.price_wrapper')[0]
-        show_list[idx].set_price(price_wrapper.select('.info')[0].text)
-        show_list[idx].set_drink(price_wrapper.select('.info')[1].text)
+        show_detail[PRICES] = price_wrapper.select('.info')[0].text
+        show_detail[DRINK] = price_wrapper.select('.info')[1].text
 
         show_photo = show_info.select('.show_photo')[0]
-        show_list[idx].set_image_url(riverside_homepage + show_photo.find("img")['src'])
-        idx += 1
-
-    for show in show_list:
-        ofile.write('(%d)\nname: %s\ndate: %s\nyear: %s\n' % (show._idx + 1, show._name, show._date, show._year))
-        ofile.write('price: %s\ndrink: %s\n' % (show._price, show._drink))
-        ofile.write('image_url: %s\n\n' % show._imageUrl)
+        show_detail[IMG_HREF] = riverside_homepage + show_photo.find("img")['src']
+        show_list.append(show_detail)
 
 def witch_house_crawler(show_list, url):
     res = requests.get(url)
@@ -92,11 +115,9 @@ red_house_list = []
 river_bank_cafe_list = []
 witch_house_list = []
 
-ofile.write('===== red house =====\n')
 river_bank_crawler(red_house_list, red_house_url)
-
-ofile.write('===== river bank cafe =====\n')
 river_bank_crawler(river_bank_cafe_list, river_bank_cafe_url)
+#witch_house_crawler(witch_house_list, witch_house_url)
 
-ofile.write('===== witch house =====\n')
-witch_house_crawler(witch_house_list, witch_house_url)
+write_json('red_house.json', red_house_list)
+write_json('river_bank_cafe.json', river_bank_cafe_list)
