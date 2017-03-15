@@ -3,7 +3,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-import requests, json, io
+import requests, json, io, time
 from bs4 import BeautifulSoup
 
 NAME = 'name'
@@ -47,9 +47,8 @@ def river_bank_crawler(show_list, url):
 
         show_date = show_info.select('.show_date')[0]
         show_date_text = strip_tags(show_date.select('.date')[0], 'span', 'date_slash').text
-        show_year_date = show_date.select('.year')[0].text + show_date_text
-        show_detail[DATE] = show_year_date
-        # TODO: convert to YYYY-MM-DD
+        show_year_date = show_date.select('.year')[0].text + show_date_text # e.g., 20170102
+        show_detail[DATE] = '{0}-{1}-{2}'.format(show_year_date[:4], show_year_date[4:6], show_year_date[6:8])
 
         price_wrapper = show_info.select('.price_wrapper')[0]
         show_detail[PRICES] = price_wrapper.select('.info')[0].text
@@ -71,14 +70,18 @@ def witch_house_crawler(show_list, url):
         show_detail[NAME] = event_name.text
 
         event_date_list = show_info.select('.date')
-        event_date = '%s-%s' % (event_date_list[0].text, event_date_list[2].text)
-        show_detail[DATE] = event_date
-        # TODO: convert to YYYY-MM-DD
+        show_detail[DATE] = '{0}-{1:0>2}-{2:0>2}'.format(time.strftime('%Y'), event_date_list[0].text, event_date_list[2].text)
 
         event_time_list = show_info.select('.time')
-        show_detail[START_TIME] = event_time_list[0].text
-        show_detail[END_TIME] = event_time_list[1].text
-        # TODO: convert to HH:MM
+        start_time = event_time_list[0].text.split(' ') # e.g., ['9:30', 'pm']
+        start_time_list = start_time[0].split(':')
+        start_time_hour = str(int(start_time_list[0]) + 12) if start_time[1] == 'pm' or start_time[1] == 'PM' else start_time_list[0]
+        show_detail[START_TIME] = '{0:0>2}:{1}'.format(start_time_hour, start_time_list[1])
+
+        end_time = event_time_list[1].text.split(' ')
+        end_time_list = end_time[0].split(':')
+        end_time_hour = str(int(end_time_list[0]) + 12) if end_time[1] == 'pm' or end_time[1] == 'PM' else end_time_list[0]
+        show_detail[END_TIME] = '{0:0>2}:{1}'.format(end_time_hour, end_time_list[1])
 
         event_img = show_info.select('.event-img')[0]
         show_detail[IMG_HREF] = event_img.find("img")['src']
