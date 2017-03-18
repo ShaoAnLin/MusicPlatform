@@ -19,6 +19,10 @@ PRICES = 'prices'
 DRINK = 'drink'
 LOCATION = 'location'
 
+location_river_bank = '河岸留言(公館)'
+location_red_house = '西門紅樓'
+location_witch_house = '女巫店'
+
 #======================= Functions =========================
 def write_json(filename, show_list):
     with io.open(filename, 'w', encoding='utf8') as outfile:
@@ -34,7 +38,7 @@ def strip_tags(soup, invalid_tag, invalid_attribute):
     return soup
 
 # TODO: show time can only be obtained by clicking "More Info."
-def river_bank_crawler(show_list, url):
+def river_bank_crawler(show_list, url, location):
     res = requests.get(url)
     res.encoding = 'utf8'
     soup = BeautifulSoup(res.text, 'html.parser')
@@ -56,6 +60,8 @@ def river_bank_crawler(show_list, url):
 
         show_photo = show_info.select('.show_photo')[0]
         show_detail[IMG_HREF] = riverside_homepage + show_photo.find("img")['src']
+
+        show_detail[LOCATION] = location
         show_list.append(show_detail)
 
 def witch_house_crawler(show_list, url):
@@ -85,6 +91,8 @@ def witch_house_crawler(show_list, url):
 
         event_img = show_info.select('.event-img')[0]
         show_detail[IMG_HREF] = event_img.find("img")['src']
+
+        show_detail[LOCATION] = location_witch_house
         show_list.append(show_detail)
 
 #======================= Main =========================
@@ -99,8 +107,8 @@ red_house_list = []
 river_bank_cafe_list = []
 witch_house_list = []
 
-river_bank_crawler(red_house_list, red_house_url)
-river_bank_crawler(river_bank_cafe_list, river_bank_cafe_url)
+river_bank_crawler(red_house_list, red_house_url, location_red_house)
+river_bank_crawler(river_bank_cafe_list, river_bank_cafe_url, location_river_bank)
 witch_house_crawler(witch_house_list, witch_house_url)
 
 write_json('red_house.json', red_house_list)
