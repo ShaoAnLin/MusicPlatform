@@ -92,6 +92,21 @@ def witch_house_crawler(show_list, url):
         event_img = show_info.select('.event-img')[0]
         show_detail[IMG_HREF] = event_img.find("img")['src']
 
+        show_detail[ARTISTS] = []
+        artist_name_list = show_info.select('.event-desc')[0].select('p')
+        get_value_flag = True
+        for description in artist_name_list:
+            if get_value_flag == True:
+                artist = {}
+                artist[ARTIST_NAME] = description.text
+                artist_href = description.find('a')
+                if artist_href != None:
+                    artist[ARTIST_HREF] = artist_href['href']
+                show_detail[ARTISTS].append(artist)
+                get_value_flag = False
+            if description.text == '-':
+                get_value_flag = True
+
         show_detail[LOCATION] = location_witch_house
         show_list.append(show_detail)
 
