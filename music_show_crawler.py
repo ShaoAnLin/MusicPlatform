@@ -3,7 +3,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-import requests, json, io, time
+import requests, json, io, time, re
 from bs4 import BeautifulSoup
 
 NAME = 'name'
@@ -37,8 +37,7 @@ def strip_tags(soup, invalid_tag, invalid_attribute):
             tag.replaceWith('')
     return soup
 
-# TODO: show time can only be obtained by clicking "More Info."
-def river_bank_crawler(show_list, url, location):
+def river_bank_crawler(show_list, url, more_info_request, location):
     res = requests.get(url)
     res.encoding = 'utf8'
     soup = BeautifulSoup(res.text, 'html.parser')
@@ -55,11 +54,20 @@ def river_bank_crawler(show_list, url, location):
         show_detail[DATE] = '{0}-{1}-{2}'.format(show_year_date[:4], show_year_date[4:6], show_year_date[6:8])
 
         price_wrapper = show_info.select('.price_wrapper')[0]
-        show_detail[PRICES] = price_wrapper.select('.info')[0].text
-        show_detail[DRINK] = price_wrapper.select('.info')[1].text
+        show_detail[PRICES] = price_wrapper.select('.info')[0].text.strip()
+        show_detail[DRINK] = price_wrapper.select('.info')[1].text.strip()
 
         show_photo = show_info.select('.show_photo')[0]
-        show_detail[IMG_HREF] = riverside_homepage + show_photo.find("img")['src']
+        show_detail[IMG_HREF] = riverside_homepage + show_photo.find('img')['src']
+
+        onclick_id = re.findall(r'\d+', str(show_photo.find('a')['onclick']))[0]
+        request = riverside_homepage + more_info_request + '&id=' + onclick_id
+        more_info_res = requests.get(request)
+        more_info_res.encoding = 'utf8'
+        more_info_soup = BeautifulSoup(more_info_res.text, 'html.parser')
+        show_time_list = more_info_soup.select('.show_time')
+        if show_time_list != []:
+            show_detail[START_TIME] = show_time_list[0].text.strip().replace(' ', '')
 
         show_detail[LOCATION] = location
         show_list.append(show_detail)
@@ -115,15 +123,17 @@ ofile = open('out.txt', 'w')
 
 riverside_homepage = 'http://www.riverside.com.tw/'
 river_bank_cafe_url = riverside_homepage + 'index.php?option=com_cafe'
+river_bank_more_info_request = 'index.php?option=com_ajax&task=query_cafe_more'
 red_house_url = riverside_homepage + 'index.php?option=com_livehouse'
+red_house_more_info_request = 'index.php?option=com_ajax&task=query_livehouse_more'
 witch_house_url = 'http://www.witchhouse.org/#event'
 
 red_house_list = []
 river_bank_cafe_list = []
 witch_house_list = []
 
-river_bank_crawler(red_house_list, red_house_url, location_red_house)
-river_bank_crawler(river_bank_cafe_list, river_bank_cafe_url, location_river_bank)
+river_bank_crawler(red_house_list, red_house_url, red_house_more_info_request, location_red_house)
+river_bank_crawler(river_bank_cafe_list, river_bank_cafe_url, river_bank_more_info_request, location_river_bank)
 witch_house_crawler(witch_house_list, witch_house_url)
 
 write_json('red_house.json', red_house_list)
