@@ -19,7 +19,7 @@ PRICES = 'prices'
 DRINK = 'drink'
 LOCATION = 'location'
 
-location_river_bank = '河岸留言(公館)'
+location_river_bank = '河岸留言 音樂藝文咖啡'
 location_red_house = '西門紅樓'
 location_witch_house = '女巫店'
 
