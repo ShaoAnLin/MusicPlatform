@@ -74,10 +74,14 @@
   // successful.  See statusChangeCallback() for when this call is made.
   function testAPI() {
     console.log('Welcome!  Fetching your information.... ');
-    FB.api('/me', function(response) {
+    FB.api('/me?fields=name,age_range,music,id,email,gender,friends.fields(id,name)', function(response) {
       console.log('Successful login for: ' + response.name);
-      document.getElementById('status').innerHTML =
-        'Thanks for logging in, ' + response.name + '!';
+      var html = 'Thanks for logging in, ' + response.name + '!';
+      html += '<br>You are ' + response.gender;
+      html += '<br>Your email is: ' + response.email;
+      html += '<br>You are greater than ' + response.age_range.min + '-year-old :P';
+      document.getElementById('status').innerHTML = html;
+      console.log(response)
     });
   }
 </script>
